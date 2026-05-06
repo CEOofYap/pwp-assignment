@@ -1,0 +1,17 @@
+[
+    {
+        "doctor_id": 1,
+        "name": "hello",
+        "age": 20
+    },
+    {
+        "doctor_id": 2,
+        "name": "Lim",
+        "age": 19
+    },
+    {
+        "doctor_id": 3,
+        "name": "Kt",
+        "age": 3
+    }
+]
