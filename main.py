@@ -124,6 +124,9 @@ history = []
 pg_idx = 0
 doctors: list[dict] = load_json("doctors.json")
 appointments: list[dict] = load_json("appointments.json")
+CONSULTATION_FEE = 50
+bill_name = []
+bill = []
 
 # Menus
 @menu
@@ -154,6 +157,67 @@ def func3():
     ])
 
 @menu
+def finance_main():
+    print("This is func3")
+
+    def generate_bill():
+
+        bill_name.clear
+        bill.clear
+            
+        def create_bill():
+
+            while True:
+
+                def add_consultation():
+                    bill_name.append("Consultation fees")
+                    bill.append(CONSULTATION_FEE)
+                    print("Consultation fees added")
+                
+                def add_bill():
+                    item = input("Enter item name: ")
+                    bill_name.append(item)
+                    price = int(input("Enter price: "))
+                    bill.append(price)
+                
+                route_options([
+                ("Add consultation fees", add_consultation),
+                ("Add bill item", add_bill),
+                ("Back", generate_bill)
+                ])
+
+            
+        def print_bill():
+            print("\n===== BILL =====")
+            print(f"{'No':<5}{'Item':<25}{'Price':>10}")
+            print("-" * 40)
+
+            for i in range(len(bill)):
+                print(f"{i+1:<5}{bill_name[i]:<25}{bill[i]:>10.2f}")
+
+            print("-" * 40)
+            print(f"{'Total':<30}{sum(bill):>10.2f}")
+
+        route_options([
+        ("Create bill", create_bill),
+        ("Print bill", print_bill)
+        ])
+
+    route_options([
+        ("func 1", func1),
+        ("func 2", func2),
+        ("func 3 again", func3),
+        ("finance_main", finance_main),
+        ("Generate Bill", generate_bill)
+    ])
+
+
+
+
+
+
+
+@menu
 def main_menu():
     print("="*96)
     print(r"""  /$$$$$$                                      /$$      /$$$$$$  /$$ /$$           /$$          
@@ -171,7 +235,7 @@ def main_menu():
         ("Administrator", func1),
         ("Receptionist", func2),
         ("Doctor", doctor_main),
-        ("Finance officier", func1) # Replace these function with your main function
+        ("Finance officer", finance_main) # Replace these function with your main function
     ])
 
 @menu
@@ -204,6 +268,8 @@ test = [
     ("func2 option", func2),
     ("func3 option", func3),
 ]
+
+
 
 if __name__ == "__main__":
     # create_appointment(1, 0, "Awaiting", "Ligma", "Balls", datetime.now().isoformat())
