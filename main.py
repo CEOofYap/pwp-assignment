@@ -275,4 +275,5 @@ if __name__ == "__main__":
     # create_appointment(1, 0, "Awaiting", "Ligma", "Balls", datetime.now().isoformat())
     # print(json.dumps(appointments, indent=4))
     # save_json("appointments.json", appointments)
+    main_menu()
     pass
