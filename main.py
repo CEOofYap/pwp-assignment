@@ -118,12 +118,26 @@ def create_appointment(doctor_id: int, patient_id: int, status:str, diagnosis: s
         "datetime": datetime
     }
     appointments.append(new_appointment)
-
+def create_patient(name: str, age: int, gender: str, phone: str, address: str):
+    global patients
+    id = max(p["patient_id"] for p in patients) + 1 if patients else 0
+    new_patient = {
+        "patient_id": id,
+        "name": name,
+        "age": age,
+        "gender": gender,
+        "phone": phone,
+        "address": address
+    }
+    patients.append(new_patient)
+    save_json("patients.json", patients)
+    print(f"Patient registered! ID: {id}")
 # Global variables here
 history = []
 pg_idx = 0
 doctors: list[dict] = load_json("doctors.json")
 appointments: list[dict] = load_json("appointments.json")
+patients: list[dict] = load_json("patients.json")
 CONSULTATION_FEE = 50
 bill_name = []
 bill = []
