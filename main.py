@@ -202,6 +202,22 @@ def finance_main():
 
             
         def print_bill():
+            def save_bill():
+                total = sum(bill)
+                appointmend_id =  int(input("Enter appointment ID: "))
+                appointments = load_json("appointments.json")
+                valid = 0
+                for i in appointments:
+                    if i["appointment_id"] == appointmend_id:
+                        i["fees"] = total
+                        save_json("appointments.json", appointments)
+                        print("Added")
+                        valid = 1
+                        break
+
+                if valid == 0:
+                    print("Error")
+
             print("\n===== BILL =====")
             print(f"{'No':<5}{'Item':<25}{'Price':>10}")
             print("-" * 40)
@@ -211,18 +227,37 @@ def finance_main():
 
             print("-" * 40)
             print(f"{'Total':<30}{sum(bill):>10.2f}")
+            
+            route_options([
+                ("Save bill", save_bill)
+            ])
 
         route_options([
         ("Create bill", create_bill),
         ("Print bill", print_bill)
         ])
 
+    def generate_reports():
+        appointments = load_json("appointments.json")
+        date_total = 0
+        date = input("Enter date (YYYY/MM/DD) or \"today\" for today's date: ")
+        if date.upper() == "TODAY":
+            date = datetime.now().date()
+
+        for i in appointments:
+            if str(datetime.fromisoformat(i["datetime"]).date()) == date:
+                date_total += (i["fees"])
+
+
+        print(f"Total for {date}: {date_total}")
+
     route_options([
         ("func 1", func1),
         ("func 2", func2),
         ("func 3 again", func3),
         ("finance_main", finance_main),
-        ("Generate Bill", generate_bill)
+        ("Generate Bill", generate_bill),
+        ("Generate Reports", generate_reports)
     ])
 
 
