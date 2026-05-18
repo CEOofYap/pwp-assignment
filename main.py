@@ -115,16 +115,29 @@ def create_appointment(doctor_id: int, patient_id: int, status:str, diagnosis: s
         "status": status,
         "diagnosis": diagnosis,
         "treatment": treatment,
-        "datetime": datetime,
-        "fees": 0
+        "datetime": datetime
     }
     appointments.append(new_appointment)
-
+def create_patient(name: str, age: int, gender: str, phone: str, address: str):
+    global patients
+    id = max(p["patient_id"] for p in patients) + 1 if patients else 0
+    new_patient = {
+        "patient_id": id,
+        "name": name,
+        "age": age,
+        "gender": gender,
+        "phone": phone,
+        "address": address
+    }
+    patients.append(new_patient)
+    save_json("patients.json", patients)
+    print(f"Patient registered! ID: {id}")
 # Global variables here
 history = []
 pg_idx = 0
 doctors: list[dict] = load_json("doctors.json")
 appointments: list[dict] = load_json("appointments.json")
+patients: list[dict] = load_json("patients.json")
 CONSULTATION_FEE = 50
 bill_name = []
 bill = []
@@ -189,22 +202,6 @@ def finance_main():
 
             
         def print_bill():
-            def save_bill():
-                total = sum(bill)
-                appointmend_id =  int(input("Enter appointment ID: "))
-                appointments = load_json("appointments.json")
-                valid = 0
-                for i in appointments:
-                    if i["appointment_id"] == appointmend_id:
-                        i["fees"] = total
-                        save_json("appointments.json", appointments)
-                        print("Added")
-                        valid = 1
-                        break
-
-                if valid == 0:
-                    print("Error")
-
             print("\n===== BILL =====")
             print(f"{'No':<5}{'Item':<25}{'Price':>10}")
             print("-" * 40)
@@ -215,40 +212,17 @@ def finance_main():
             print("-" * 40)
             print(f"{'Total':<30}{sum(bill):>10.2f}")
 
-            route_options([
-                ("Save bill", save_bill)
-            ])
-
-
-                                        
-
         route_options([
         ("Create bill", create_bill),
         ("Print bill", print_bill)
         ])
-
-    def generate_reports():
-        appointments = load_json("appointments.json")
-        date_total = 0
-        date = input("Enter date (YYYY/MM/DD) or \"today\" for today's date: ")
-        if date.upper() == "TODAY":
-            date = datetime.now().date()
-
-        print(date)
-        for i in appointments:
-            if str(datetime.fromisoformat(i["datetime"]).date()) == date:
-                date_total += (i["fees"])
-
-
-        print(f"Total for {date}: {date_total}")
 
     route_options([
         ("func 1", func1),
         ("func 2", func2),
         ("func 3 again", func3),
         ("finance_main", finance_main),
-        ("Generate Bill", generate_bill),
-        ("Generate Reports", generate_reports)
+        ("Generate Bill", generate_bill)
     ])
 
 
@@ -301,7 +275,7 @@ def record_consultation():
 def mark_appointment():
     pass
         
-main_menu()
+
 
 test = [
     ("func1 option", func1),
@@ -315,4 +289,5 @@ if __name__ == "__main__":
     # create_appointment(1, 0, "Awaiting", "Ligma", "Balls", datetime.now().isoformat())
     # print(json.dumps(appointments, indent=4))
     # save_json("appointments.json", appointments)
+    main_menu()
     pass
