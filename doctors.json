@@ -2,16 +2,25 @@
     {
         "doctor_id": 1,
         "name": "hello",
-        "age": 20
+        "age": 30,
+        "specialization": "General Practice",
+        "fee": 50.00,
+        "available_slots": ["09:00", "10:00", "11:00", "14:00", "15:00"]
     },
     {
         "doctor_id": 2,
         "name": "Lim",
-        "age": 19
+        "age": 35,
+        "specialization": "Cardiology",
+        "fee": 80.00,
+        "available_slots": ["09:00", "10:00", "11:00"]
     },
     {
         "doctor_id": 3,
         "name": "Kt",
-        "age": 3
+        "age": 40,
+        "specialization": "Dermatology",
+        "fee": 60.00,
+        "available_slots": ["10:00", "11:00", "14:00", "15:00"]
     }
 ]

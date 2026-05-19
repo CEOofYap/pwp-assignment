@@ -6,5 +6,13 @@
         "gender": "M",
         "phone": "0167079821",
         "address": "fairview mansion"
+    },
+    {
+        "patient_id": "P002",
+        "name": "jeng heng",
+        "age": 19,
+        "gender": "M",
+        "phone": "016399324",
+        "address": "taman gembira"
     }
 ]

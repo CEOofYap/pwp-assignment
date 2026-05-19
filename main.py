@@ -192,6 +192,7 @@ def receptionist_main():
         ("Cancel appointment",        cancel_appointment),
         ("View appointments",         view_appointments),
         ("Check doctor availability", check_availability),
+        ("Back to main menu",         main_menu),
     ])
 
 @menu

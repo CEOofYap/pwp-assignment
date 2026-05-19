@@ -17,5 +17,23 @@
         "treatment": "Balls",
         "datetime": "2026-05-07T02:07:40.308253",
         "fees": 100
+    },
+    {
+        "appointment_id": 2,
+        "doctor_id": 1,
+        "patient_id": "P001",
+        "status": "Awaiting",
+        "diagnosis": "",
+        "treatment": "",
+        "datetime": "2026-05-28 09:00"
+    },
+    {
+        "appointment_id": 3,
+        "doctor_id": 3,
+        "patient_id": "P002",
+        "status": "Awaiting",
+        "diagnosis": "",
+        "treatment": "",
+        "datetime": "2026-04-04 10:00"
     }
 ]
