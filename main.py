@@ -2,6 +2,8 @@ import os
 from datetime import datetime
 import json
 
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+
 # Helper function
 def clear_menu():
     """
@@ -21,6 +23,14 @@ def menu(func):
         return func(*args, **kwargs)
     
     return wrapper
+
+def get_data_path(filepath: str):
+    """
+    Returns the full path for data files stored beside main.py.
+    """
+    if os.path.isabs(filepath):
+        return filepath
+    return os.path.join(BASE_DIR, filepath)
 
 def exit():
     print("Exiting program...")
@@ -75,7 +85,7 @@ def load_json(filepath:str):
         filepath(str): Where the json file is located
     """
     try:
-        with open(filepath, "r") as f:
+        with open(get_data_path(filepath), "r") as f:
             if not f.read().strip():
                 return []
             f.seek(0)
@@ -125,13 +135,21 @@ def save_json(filepath: str, data):
         filepath(str): Where the json file will be located
     """
     try:
-        with open(filepath, "w") as f:
+        with open(get_data_path(filepath), "w") as f:
             json.dump(data, f, indent=4)
     except Exception as e:
         print("Please put a proper json object in the function!!! Here's the error msg: ")
         print(e)
 
-def create_appointment(doctor_id: int, patient_id: int, status:str, diagnosis: str, treatment: str, datetime: str):
+def get_next_patient_id():
+    biggest_id = 0
+    for patient in patients:
+        patient_id = str(patient.get("patient_id", ""))
+        if patient_id.startswith("P") and patient_id[1:].isdigit():
+            biggest_id = max(biggest_id, int(patient_id[1:]))
+    return f"P{biggest_id + 1:03d}"
+
+def create_appointment(doctor_id: int, patient_id: str, status:str, diagnosis: str, treatment: str, datetime: str):
     global appointments
     id = max(a["appointment_id"] for a in appointments) + 1  if appointments else 0 # Get biggest id then + 1 for new id, use 0 if no item in the list
     new_appointment = {
@@ -144,11 +162,12 @@ def create_appointment(doctor_id: int, patient_id: int, status:str, diagnosis: s
         "datetime": datetime
     }
     appointments.append(new_appointment)
+
 def create_patient(name: str, age: int, gender: str, phone: str, address: str):
     global patients
-    id = max(p["patient_id"] for p in patients) + 1 if patients else 0
+    patient_id = get_next_patient_id()
     new_patient = {
-        "patient_id": id,
+        "patient_id": patient_id,
         "name": name,
         "age": age,
         "gender": gender,
@@ -157,7 +176,7 @@ def create_patient(name: str, age: int, gender: str, phone: str, address: str):
     }
     patients.append(new_patient)
     save_json("patients.json", patients)
-    print(f"Patient registered! ID: {id}")
+    print(f"Patient registered! ID: {patient_id}")
 # Global variables here
 history = []
 pg_idx = 0
@@ -200,9 +219,7 @@ def register_patient():
     print("=" * 96)
     print("REGISTER NEW PATIENT")
 
-    # Change this line - generate P001 format
-    num = max((int(p["patient_id"][1:]) for p in patients), default=0) + 1
-    patient_id = f"P{num:03d}"
+    patient_id = get_next_patient_id()
 
     name    = input("Full name   : ").strip()
     age     = int(input("Age         : ").strip())
