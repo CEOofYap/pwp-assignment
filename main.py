@@ -76,10 +76,36 @@ def load_json(filepath:str):
     """
     try:
         with open(filepath, "r") as f:
+            if not f.read().strip():
+                return []
+            f.seek(0)
             return json.load(f)
     except Exception as e:
         print("Something is wrong when loading the function!!!")
         print(e)
+        return []
+
+def parse_date(date_text: str):
+    """
+    Converts user date input into YYYY-MM-DD format.
+    Accepts YYYY-MM-DD, YYYY/MM/DD, or today.
+    """
+    date_text = date_text.strip()
+
+    if date_text.upper() == "TODAY":
+        return datetime.now().date().isoformat()
+
+    for date_format in ("%Y-%m-%d", "%Y/%m/%d"):
+        try:
+            return datetime.strptime(date_text, date_format).date().isoformat()
+        except ValueError:
+            continue
+
+    print("[!] Invalid date format. Please use YYYY-MM-DD.")
+    return None
+
+def call_menu(function_name: str):
+    return lambda: globals()[function_name]()
 
 def create_doctors(name: str, age:int):
     global doctors
@@ -148,25 +174,487 @@ def func1():
     print("This is func1")
     route_options([
         ("func 1 again", func1),
-        ("func 2", func2),
+        ("func 2", call_menu("receptionist_main")),
         ("func 3", func3)
     ])
-
-@menu 
-def func2():
-    print("This is func2")
+#receptionist
+@menu
+def receptionist_main():
+    print("=" * 96)
+    print("Role: Receptionist")
+    print("What do you want to do?")
     route_options([
-        ("func 1", func1),
-        ("func 2 again", func2),
-        ("func 3", func3)
+        ("Register new patient",      register_patient),
+        ("Search patient",            search_patient),
+        ("View all patients",         view_all_patients),
+        ("Book appointment",          book_appointment),
+        ("Reschedule appointment",    reschedule_appointment),
+        ("Cancel appointment",        cancel_appointment),
+        ("View appointments",         view_appointments),
+        ("Check doctor availability", check_availability),
     ])
 
+@menu
+def register_patient():
+    print("=" * 96)
+    print("REGISTER NEW PATIENT")
+
+    # Change this line - generate P001 format
+    num = max((int(p["patient_id"][1:]) for p in patients), default=0) + 1
+    patient_id = f"P{num:03d}"
+
+    name    = input("Full name   : ").strip()
+    age     = int(input("Age         : ").strip())
+    gender  = input("Gender (M/F): ").strip().upper()
+    phone   = input("Phone       : ").strip()
+    address = input("Address     : ").strip()
+
+    new_patient = {
+        "patient_id": patient_id,
+        "name": name,
+        "age": age,
+        "gender": gender,
+        "phone": phone,
+        "address": address
+    }
+    patients.append(new_patient)
+    save_json("patients.json", patients)
+    print(f"\n  ✔ Patient registered! ID: {patient_id}")
+    input("\nPress ENTER to continue...")
+    receptionist_main()
+
+@menu
+def search_patient():
+    print("=" * 96)
+    print("SEARCH PATIENT")
+
+    keyword = input("Enter Patient ID or Name to search: ").strip().lower()
+    matches = [p for p in patients if keyword in str(p["patient_id"]) or keyword in p["name"].lower()]
+
+    if not matches:
+        print("[!] No matching patient found.")
+    else:
+        print(f"\n  {'ID':<6} {'Name':<25} {'Age':<5} {'Gender':<8} {'Phone':<14} Address")
+        print("  " + "-" * 70)
+        for p in matches:
+            print(f"  {p['patient_id']:<6} {p['name']:<25} {p['age']:<5} {p['gender']:<8} {p['phone']:<14} {p['address']}")
+
+    input("\nPress ENTER to continue...")
+    receptionist_main()
+
+@menu
+def view_all_patients():
+    print("=" * 96)
+    print("ALL REGISTERED PATIENTS")
+
+    if not patients:
+        print("[!] No patients registered yet.")
+    else:
+        print(f"\n  {'ID':<6} {'Name':<25} {'Age':<5} {'Gender':<8} {'Phone':<14} Address")
+        print("  " + "-" * 70)
+        for p in patients:
+            print(f"  {p['patient_id']:<6} {p['name']:<25} {p['age']:<5} {p['gender']:<8} {p['phone']:<14} {p['address']}")
+
+    input("\nPress ENTER to continue...")
+    receptionist_main()
+
+@menu
+def book_appointment():
+    print("=" * 96)
+    print("BOOK APPOINTMENT")
+
+    # Check patients exist
+    if not patients:
+        print("[!] No patients registered yet.")
+        input("Press ENTER to continue...")
+        receptionist_main()
+        return
+
+    # Show all patients
+    print(f"\n  {'Patient ID':<12} {'Name':<25} {'Age':<6} {'Gender':<8} Phone")
+    print("  " + "-" * 60)
+    for p in patients:
+        print(f"  {p['patient_id']:<12} {p['name']:<25} {p['age']:<6} {p['gender']:<8} {p['phone']}")
+
+    patient_id = input("\nEnter Patient ID: ").strip()
+    patient = next((p for p in patients if str(p["patient_id"]) == patient_id), None)
+    if not patient:
+        print("[!] Patient not found.")
+        input("Press ENTER to continue...")
+        receptionist_main()
+        return
+
+    # Show all doctors
+    if not doctors:
+        print("[!] No doctors available.")
+        input("Press ENTER to continue...")
+        receptionist_main()
+        return
+
+    print(f"\n  {'Doctor ID':<12} {'Name':<25} {'Specialization':<20} Fee")
+    print("  " + "-" * 65)
+    for d in doctors:
+        spec = d.get("specialization", "N/A")
+        fee  = d.get("fee", "N/A")
+        print(f"  {d['doctor_id']:<12} {d['name']:<25} {spec:<20} RM {fee}")
+
+    doctor_id = input("\nEnter Doctor ID: ").strip()
+    doctor = next((d for d in doctors if str(d["doctor_id"]) == doctor_id), None)
+    if not doctor:
+        print("[!] Doctor not found.")
+        input("Press ENTER to continue...")
+        receptionist_main()
+        return
+
+    # Ask for date
+    while True:
+        date_str = parse_date(input("Enter appointment date (YYYY-MM-DD): ").strip())
+        if date_str:
+            break
+
+    # Get doctor's slots and cross-check with bookings
+    available_slots = doctor.get("available_slots", [])
+    if not available_slots:
+        print("[!] This doctor has no available slots configured.")
+        input("Press ENTER to continue...")
+        receptionist_main()
+        return
+
+    booked_slots = [
+        a["datetime"].split(" ")[1][:5] if " " in a["datetime"]
+        else a["datetime"].split("T")[1][:5] if "T" in a["datetime"]
+        else ""
+        for a in appointments
+        if a["doctor_id"] == int(doctor_id)
+        and a["datetime"].startswith(date_str)
+        and a["status"] != "Cancelled"
+    ]
+
+    free_slots = [s for s in available_slots if s not in booked_slots]
+
+    if not free_slots:
+        print(f"\n  [!] Dr. {doctor['name']} is fully booked on {date_str}.")
+        input("Press ENTER to continue...")
+        receptionist_main()
+        return
+
+    # Show available slots
+    print(f"\n  Available slots for Dr. {doctor['name']} on {date_str}:")
+    print("  " + "-" * 30)
+    for i, slot in enumerate(free_slots, 1):
+        print(f"  [{i}] {slot}")
+
+    # Pick a slot
+    while True:
+        try:
+            slot_choice = int(input("\n  Select slot number: "))
+            if 1 <= slot_choice <= len(free_slots):
+                chosen_slot = free_slots[slot_choice - 1]
+                break
+            else:
+                print(f"  [!] Please enter a number between 1 and {len(free_slots)}.")
+        except ValueError:
+            print("  [!] Invalid input. Please enter a number.")
+
+    datetime_str = f"{date_str} {chosen_slot}"
+
+    create_appointment(int(doctor_id), patient_id, "Awaiting", "", "", datetime_str)
+    save_json("appointments.json", appointments)
+
+    print("\n  ✔ Appointment booked successfully!")
+    print(f"     Patient : {patient['name']} (ID: {patient_id})")
+    print(f"     Doctor  : Dr. {doctor['name']} ({doctor.get('specialization', 'N/A')})")
+    print(f"     Date    : {datetime_str}")
+    print(f"     Fee     : RM {doctor.get('fee', 'N/A')}")
+
+    input("\nPress ENTER to continue...")
+    receptionist_main()
+
+@menu
+def reschedule_appointment():
+    print("=" * 96)
+    print("RESCHEDULE APPOINTMENT")
+
+    if not appointments:
+        print("[!] No appointments found.")
+        input("Press ENTER to continue...")
+        receptionist_main()
+        return
+
+    # Show only awaiting appointments
+    scheduled = [a for a in appointments if a["status"] == "Awaiting"]
+    if not scheduled:
+        print("[!] No scheduled appointments to reschedule.")
+        input("Press ENTER to continue...")
+        receptionist_main()
+        return
+
+    # Show appointments with patient and doctor name
+    print(f"\n  {'Appt ID':<10} {'Patient':<20} {'Doctor':<20} {'Date & Time':<22} Status")
+    print("  " + "-" * 85)
+    for a in scheduled:
+        patient = next((p for p in patients if p["patient_id"] == a["patient_id"]), None)
+        doctor  = next((d for d in doctors  if d["doctor_id"]  == a["doctor_id"]),  None)
+        p_name  = patient["name"] if patient else f"ID {a['patient_id']}"
+        d_name  = f"Dr. {doctor['name']}" if doctor else f"ID {a['doctor_id']}"
+
+        raw_dt   = a["datetime"]
+        clean_dt = raw_dt.replace("T", " ").split(".")[0].split("+")[0]
+
+        print(f"  {a['appointment_id']:<10} {p_name:<20} {d_name:<20} {clean_dt:<22} {a['status']}")
+
+    # Pick appointment
+    while True:
+        try:
+            appt_id = int(input("\nEnter Appointment ID to reschedule: ").strip())
+            appt = next((a for a in appointments if a["appointment_id"] == appt_id), None)
+            if not appt:
+                print("[!] Appointment ID not found. Try again.")
+                continue
+            if appt["status"] != "Awaiting":
+                print(f"[!] Cannot reschedule — status is '{appt['status']}'.")
+                input("Press ENTER to continue...")
+                receptionist_main()
+                return
+            break
+        except ValueError:
+            print("[!] Invalid input. Please enter a number.")
+
+    # Get the doctor for this appointment
+    doctor = next((d for d in doctors if d["doctor_id"] == appt["doctor_id"]), None)
+    if not doctor:
+        print("[!] Doctor not found.")
+        input("Press ENTER to continue...")
+        receptionist_main()
+        return
+
+    # Ask for new date
+    while True:
+        new_date = parse_date(input("Enter appointment date (YYYY-MM-DD): ").strip())
+        if new_date:
+            break
+
+    # Get doctor slots and cross-check bookings on new date (exclude current appointment)
+    available_slots = doctor.get("available_slots", [])
+    if not available_slots:
+        print("[!] This doctor has no available slots configured.")
+        input("Press ENTER to continue...")
+        receptionist_main()
+        return
+
+    booked_slots = [
+        a["datetime"].split(" ")[1][:5] if " " in a["datetime"]
+        else a["datetime"].split("T")[1][:5] if "T" in a["datetime"]
+        else ""
+        for a in appointments
+        if a["doctor_id"]       == appt["doctor_id"]
+        and a["datetime"].startswith(new_date)
+        and a["status"]         != "Cancelled"
+        and a["appointment_id"] != appt_id       # exclude current appointment
+    ]
+
+    free_slots = [s for s in available_slots if s not in booked_slots]
+
+    if not free_slots:
+        print(f"\n  [!] Dr. {doctor['name']} is fully booked on {new_date}.")
+        input("Press ENTER to continue...")
+        receptionist_main()
+        return
+
+    # Show available slots
+    print(f"\n  Available slots for Dr. {doctor['name']} on {new_date}:")
+    print("  " + "-" * 30)
+    for i, slot in enumerate(free_slots, 1):
+        print(f"  [{i}] {slot}")
+
+    # Pick a slot
+    while True:
+        try:
+            slot_choice = int(input("\n  Select slot number: "))
+            if 1 <= slot_choice <= len(free_slots):
+                chosen_slot = free_slots[slot_choice - 1]
+                break
+            else:
+                print(f"  [!] Please enter a number between 1 and {len(free_slots)}.")
+        except ValueError:
+            print("  [!] Invalid input. Please enter a number.")
+
+    # Update the appointment
+    old_datetime     = appt["datetime"]
+    appt["datetime"] = f"{new_date} {chosen_slot}"
+    save_json("appointments.json", appointments)
+
+    print(f"\n  ✔ Appointment {appt_id} rescheduled successfully!")
+    print(f"     Patient  : {next((p['name'] for p in patients if p['patient_id'] == appt['patient_id']), 'N/A')}")
+    print(f"     Doctor   : Dr. {doctor['name']} ({doctor.get('specialization', 'N/A')})")
+    print(f"     Old time : {old_datetime.replace('T', ' ').split('.')[0].split('+')[0]}")
+    print(f"     New time : {appt['datetime']}")
+
+    input("\nPress ENTER to continue...")
+    receptionist_main()
+
+@menu
+def cancel_appointment():
+    print("=" * 96)
+    print("CANCEL APPOINTMENT")
+
+    # Filter only active appointments
+    active = [a for a in appointments if a["status"] not in ("Cancelled", "Completed")]
+    if not active:
+        print("[!] No active appointments to cancel.")
+        input("Press ENTER to continue...")
+        receptionist_main()
+        return
+
+    # Show active appointments with patient and doctor name
+    print(f"\n  {'Appt ID':<10} {'Patient':<20} {'Doctor':<20} {'Date & Time':<22} Status")
+    print("  " + "-" * 85)
+    for a in active:
+        patient  = next((p for p in patients if p["patient_id"] == a["patient_id"]), None)
+        doctor   = next((d for d in doctors  if d["doctor_id"]  == a["doctor_id"]),  None)
+        p_name   = patient["name"] if patient else f"ID {a['patient_id']}"
+        d_name   = f"Dr. {doctor['name']}" if doctor else f"ID {a['doctor_id']}"
+
+        raw_dt   = a["datetime"]
+        clean_dt = raw_dt.replace("T", " ").split(".")[0].split("+")[0]
+
+        print(f"  {a['appointment_id']:<10} {p_name:<20} {d_name:<20} {clean_dt:<22} {a['status']}")
+
+    # Pick appointment
+    while True:
+        try:
+            appt_id = int(input("\nEnter Appointment ID to cancel: ").strip())
+            appt = next((a for a in appointments if a["appointment_id"] == appt_id), None)
+            if not appt:
+                print("[!] Appointment ID not found. Try again.")
+                continue
+            if appt["status"] in ("Cancelled", "Completed"):
+                print(f"[!] Cannot cancel — status is already '{appt['status']}'.")
+                input("Press ENTER to continue...")
+                receptionist_main()
+                return
+            break
+        except ValueError:
+            print("[!] Invalid input. Please enter a number.")
+
+    # Show appointment details before confirming
+    patient  = next((p for p in patients if p["patient_id"] == appt["patient_id"]), None)
+    doctor   = next((d for d in doctors  if d["doctor_id"]  == appt["doctor_id"]),  None)
+    p_name   = patient["name"] if patient else f"ID {appt['patient_id']}"
+    d_name   = f"Dr. {doctor['name']} ({doctor.get('specialization', 'N/A')})" if doctor else f"ID {appt['doctor_id']}"
+    clean_dt = appt["datetime"].replace("T", " ").split(".")[0].split("+")[0]
+
+    print(f"\n  Appointment details:")
+    print(f"     Appt ID  : {appt_id}")
+    print(f"     Patient  : {p_name}")
+    print(f"     Doctor   : {d_name}")
+    print(f"     Date     : {clean_dt}")
+    print(f"     Status   : {appt['status']}")
+
+    # Confirm cancellation
+    confirm = input("\n  Are you sure you want to cancel this appointment? (Y/N): ").strip().upper()
+    if confirm == "Y":
+        appt["status"] = "Cancelled"
+        save_json("appointments.json", appointments)
+        print(f"\n  ✔ Appointment {appt_id} has been cancelled.")
+        print(f"     Patient : {p_name}")
+        print(f"     Doctor  : {d_name}")
+        print(f"     Date    : {clean_dt}")
+    else:
+        print("\n  Cancellation aborted. No changes made.")
+
+    input("\nPress ENTER to continue...")
+    receptionist_main()
+
+@menu
+def view_appointments():
+    print("=" * 96)
+    print("VIEW APPOINTMENTS")
+
+    if not appointments:
+        print("[!] No appointments found.")
+        input("\nPress ENTER to continue...")
+        receptionist_main()
+        return
+
+    print(f"\n  {'Appt ID':<10} {'Patient':<20} {'Doctor':<20} {'Date & Time':<22} {'Status':<12} {'Diagnosis':<20} Treatment")
+    print("  " + "-" * 115)
+
+    for a in appointments:
+        # Get patient name
+        patient = next((p for p in patients if p["patient_id"] == a["patient_id"]), None)
+        p_name = patient["name"] if patient else f"ID {a['patient_id']}"
+
+        # Get doctor name
+        doctor = next((d for d in doctors if d["doctor_id"] == a["doctor_id"]), None)
+        d_name = f"Dr. {doctor['name']}" if doctor else f"ID {a['doctor_id']}"
+
+        # Clean up datetime
+        raw_dt = a["datetime"]
+        clean_dt = raw_dt.replace("T", " ").split(".")[0].split("+")[0]
+
+        # Handle empty fields
+        diagnosis = a["diagnosis"] if a["diagnosis"] else "N/A"
+        treatment = a["treatment"] if a["treatment"] else "N/A"
+
+        print(f"  {a['appointment_id']:<10} {p_name:<20} {d_name:<20} {clean_dt:<22} {a['status']:<12} {diagnosis:<20} {treatment}")
+
+    input("\nPress ENTER to continue...")
+    receptionist_main()
+
+@menu
+def check_availability():
+    print("=" * 96)
+    print("CHECK DOCTOR AVAILABILITY")
+
+    if not doctors:
+        print("[!] No doctors available.")
+        input("Press ENTER to continue...")
+        receptionist_main()
+        return
+
+    while True:
+        date_str = parse_date(input("Enter appointment date (YYYY-MM-DD): ").strip())
+        if date_str:
+            break
+
+    print()
+    for d in doctors:
+        available_slots = d.get("available_slots", [])
+
+        # Get booked slots for this doctor on this date
+        booked_slots = [
+            a["datetime"].split(" ")[1][:5] if " " in a["datetime"]
+            else a["datetime"].split("T")[1][:5] if "T" in a["datetime"]
+            else ""
+            for a in appointments
+            if a["doctor_id"] == d["doctor_id"]
+            and a["datetime"].startswith(date_str)
+            and a["status"] != "Cancelled"
+        ]
+
+        print(f"  Dr. {d['name']} ({d.get('specialization', 'N/A')}) — Fee: RM {d.get('fee', 'N/A')}")
+        print(f"  {'Slot':<10} Availability")
+        print("  " + "-" * 25)
+
+        if not available_slots:
+            print("  No slots configured for this doctor.")
+        else:
+            for slot in available_slots:
+                if slot in booked_slots:
+                    print(f"  {slot:<10} ✗ Booked")
+                else:
+                    print(f"  {slot:<10} ✔ Available")
+        print()
+
+    input("Press ENTER to continue...")
+    receptionist_main()
 @menu
 def func3():
     print("This is func3")
     route_options([
         ("func 1", func1),
-        ("func 2", func2),
+        ("func 2", receptionist_main),
         ("func 3 again", func3)
     ])
 
@@ -253,7 +741,7 @@ def finance_main():
 
     route_options([
         ("func 1", func1),
-        ("func 2", func2),
+        ("func 2", receptionist_main),
         ("func 3 again", func3),
         ("finance_main", finance_main),
         ("Generate Bill", generate_bill),
@@ -282,7 +770,7 @@ def main_menu():
     print("Welcome to SmartClinic - Appointment and Patient System")
     route_options([
         ("Administrator", func1),
-        ("Receptionist", func2),
+        ("Receptionist", receptionist_main),
         ("Doctor", doctor_main),
         ("Finance officer", finance_main) # Replace these function with your main function
     ])
@@ -314,7 +802,7 @@ def mark_appointment():
 
 test = [
     ("func1 option", func1),
-    ("func2 option", func2),
+    ("func2 option", receptionist_main),
     ("func3 option", func3),
 ]
 
