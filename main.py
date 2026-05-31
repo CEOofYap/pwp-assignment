@@ -1,5 +1,5 @@
 import os
-from datetime import datetime
+from datetime import datetime, date
 import json
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
@@ -117,13 +117,16 @@ def parse_date(date_text: str):
 def call_menu(function_name: str):
     return lambda: globals()[function_name]()
 
-def create_doctors(name: str, age:int):
+def create_doctors(name: str, age: int, specialization: str, fee: int, available_slots: list[str]):
     global doctors
     id = max(d["doctor_id"] for d in doctors) + 1  if doctors else 0 # Get biggest id then + 1 for new id, use 0 if no doctors
     new_doctor = {
         "doctor_id": id,
         "name": name,
         "age": age,
+        "specialization": specialization,
+        "fee": fee,
+        "available_slots": available_slots
     }
     doctors.append(new_doctor)
 
@@ -140,6 +143,15 @@ def save_json(filepath: str, data):
     except Exception as e:
         print("Please put a proper json object in the function!!! Here's the error msg: ")
         print(e)
+
+def get_patient_by_ID(ID: str):
+    """
+    Return patient if their ID matched, else return None
+    """
+    for p in patients:
+        if ID == p["patient_id"]:
+            return p
+    return None
 
 def get_next_patient_id():
     biggest_id = 0
@@ -162,6 +174,8 @@ def create_appointment(doctor_id: int, patient_id: str, status:str, diagnosis: s
         "datetime": datetime
     }
     appointments.append(new_appointment)
+    save_json("appointments.json", appointments)
+
 
 def create_patient(name: str, age: int, gender: str, phone: str, address: str):
     global patients
@@ -177,6 +191,13 @@ def create_patient(name: str, age: int, gender: str, phone: str, address: str):
     patients.append(new_patient)
     save_json("patients.json", patients)
     print(f"Patient registered! ID: {patient_id}")
+
+def print_all_doctors():
+    print(f"\n  {'ID':<6} {'Name':<30} {'Age':<5} Specialization")
+    print("  " + "-" * 70)
+    for d in doctors:
+        print(f"  {d["doctor_id"]:<6} {d["name"]:<30} {d["age"]:<5} {d["specialization"]}")
+
 # Global variables here
 history = []
 pg_idx = 0
@@ -667,6 +688,7 @@ def check_availability():
 
     input("Press ENTER to continue...")
     receptionist_main()
+
 @menu
 def func3():
     print("This is func3")
@@ -676,6 +698,7 @@ def func3():
         ("func 3 again", func3)
     ])
 
+#Finance menu
 @menu
 def finance_main():
     print("This is func3")
@@ -769,9 +792,6 @@ def finance_main():
 
 
 
-
-
-
 @menu
 def main_menu():
     print("="*96)
@@ -793,38 +813,145 @@ def main_menu():
         ("Finance officer", finance_main) # Replace these function with your main function
     ])
 
+# Doctor menu
 @menu
 def doctor_main():
     print("="*96)
     print("Role: Doctor")
     print("What do you want to do?")
     route_options([
-        ("View appointment", view_appointment),
-        ("Record consultation", record_consultation),
-        ("Mark appointment status", mark_appointment)
+        ("View daily appointment schedule", view_doctor_appointment),
+        ("View all future appointments", view_future_appointment),
+        ("Record a consultation", record_consultation),
+        ("Mark appointment status", mark_appointment), 
+        ("Edit past consultation", edit_consultation),
+        ("Back to main menu", main_menu)
     ])
-    
+
+def find_doctor():
+    """
+    Find doctor from user input of Doctor ID or Name.
+
+    Returns: Doctor if found, else None
+    """
+    keyword = input("Enter Doctor ID or Name to check daily appointment: ").strip().lower()
+    matches = [d for d in doctors if keyword in str(d["doctor_id"]) or keyword in d["name"].lower()]
+
+    if not matches: 
+        print("[!] No matching patient found.")
+        wait = input('\nPress Enter to continue...')
+        return None
+    elif len(matches) > 1:
+        print(f"\n  {'ID':<6} {'Name':<30} {'Age':<5} Specialization")
+        print("  " + "-" * 70)
+        for d in matches:
+            print(f"  {d["doctor_id"]:<6} {d["name"]:<30} {d["age"]:<5} {d["specialization"]}")
+        wait = input("\n There are more than one doctor with matching name/ID, please specify...")
+        return None
+    else:
+        return matches[0]
+
 @menu
-def view_appointment():
-    pass
+def view_doctor_appointment():
+    # Insert doctor name or ID
+    # Identify which doctor and display their daily appointment 
+    # maybe show future appointment as well
+    daily_a = []
+    print("=" * 96)
+    print("SEARCH DOCTOR")
+    print_all_doctors()
+
+     # Find doctor from user input
+    d = find_doctor()
+    
+    if d:
+        # Find appointment based on doctor
+        print(f"\n  {'ID':<6} {'Name':<30} {'Age':<5} Specialization")
+        print("  " + "-" * 70)
+        print(f"  {d["doctor_id"]:<6} {d["name"]:<30} {d["age"]:<5} {d["specialization"]}")
+        for a in appointments:
+            # Check if it is the current doctor's appointment
+            if d["doctor_id"] == a["doctor_id"]:
+                # Check if date is today
+                if datetime.strptime(a["datetime"], '%Y-%m-%d %H:%M').date() == date.today():
+                    daily_a.append(a)
+    else:
+        # Run again to ask for doctor again
+        view_doctor_appointment()
+
+    # Check if there is any appoint today
+    if not daily_a:
+        print("\nThere is no appointment today")
+    else:
+        print(f"\nAPPOINTMENTS")
+        print(f"  {'ID':<6} {"Patient ID":<10} {"Name":<30} {"Status":<10} {"Datetime"}")
+        print("  " + "-" * 70)
+        for a in daily_a:
+            p = get_patient_by_ID(a["patient_id"])
+            print(f"  {a["appointment_id"]:<6} {p["patient_id"]:<10} {p["name"]:<30} {a["status"]:<10} {a["datetime"]}")
+    wait = input("Press Enter to continue...")
+    doctor_main()
+
+@menu
+def view_future_appointment():
+    daily_a = []
+    print("=" * 96)
+    print("SEARCH DOCTOR")
+    print_all_doctors()
+    
+    # Find doctor from user input
+    d = find_doctor()
+    
+    if d:
+        # Find appointment based on doctor
+        print(f"\n  {'ID':<6} {'Name':<30} {'Age':<5} Specialization")
+        print("  " + "-" * 70)
+        print(f"  {d["doctor_id"]:<6} {d["name"]:<30} {d["age"]:<5} {d["specialization"]}")
+        for a in appointments:
+            # Check if it is the current doctor's appointment
+            if d["doctor_id"] == a["doctor_id"]:
+                # Check if date is today
+                if datetime.strptime(a["datetime"], '%Y-%m-%d %H:%M').date() > date.today():
+                    daily_a.append(a)
+    else:
+        # Run again to ask for doctor again
+        view_future_appointment()
+
+
+    # Check if there is any appoint today
+    if not daily_a:
+        print("\nThere is no appointment today")
+    else:
+        print(f"\nAPPOINTMENTS")
+        print(f"  {'ID':<6} {"Patient ID":<10} {"Name":<30} {"Status":<10} {"Datetime"}")
+        print("  " + "-" * 70)
+        for a in daily_a:
+            p = get_patient_by_ID(a["patient_id"])
+            print(f"  {a["appointment_id"]:<6} {p["patient_id"]:<10} {p["name"]:<30} {a["status"]:<10} {a["datetime"]}")
+    wait = input("Press Enter to continue...")
+    doctor_main()
+
 
 @menu
 def record_consultation():
+    # Display recent appointment (within a month)
+    # Select which appointment
+    # Mark it status as Complete/Awaiting/Missed/Cancelled
+    # Insert diagnosis and treatment
+    pass
+
+@menu
+def edit_consultation():
+    # Display all consultation
+    # Select which to edit
+    # Make changes
     pass
 
 @menu
 def mark_appointment():
+    # Change the satus of Appointment
     pass
         
-
-
-test = [
-    ("func1 option", func1),
-    ("func2 option", receptionist_main),
-    ("func3 option", func3),
-]
-
-
 
 if __name__ == "__main__":
     # create_appointment(1, 0, "Awaiting", "Ligma", "Balls", datetime.now().isoformat())

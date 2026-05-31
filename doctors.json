@@ -4,7 +4,7 @@
         "name": "hello",
         "age": 30,
         "specialization": "General Practice",
-        "fee": 50.00,
+        "fee": 50.0,
         "available_slots": ["09:00", "10:00", "11:00", "14:00", "15:00"]
     },
     {
@@ -12,7 +12,7 @@
         "name": "Lim",
         "age": 35,
         "specialization": "Cardiology",
-        "fee": 80.00,
+        "fee": 80.0,
         "available_slots": ["09:00", "10:00", "11:00"]
     },
     {
@@ -20,7 +20,15 @@
         "name": "Kt",
         "age": 40,
         "specialization": "Dermatology",
-        "fee": 60.00,
+        "fee": 60.0,
         "available_slots": ["10:00", "11:00", "14:00", "15:00"]
+    },
+    {
+        "doctor_id": 4,
+        "name": "Evil Kt",
+        "age": 40,
+        "specialization": "Urology",
+        "fee": 60.0,
+        "available_slots": ["10:00", "11:00", "14:00", "15:00", "16:00"]
     }
 ]

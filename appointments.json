@@ -16,5 +16,50 @@
         "diagnosis": "",
         "treatment": "",
         "datetime": "2026-06-06 10:00"
+    },
+    {
+        "appointment_id": 2,
+        "doctor_id": 1,
+        "patient_id": "P003",
+        "status": "Awaiting",
+        "diagnosis": "",
+        "treatment": "",
+        "datetime": "2026-06-01 15:00"
+    },
+    {
+        "appointment_id": 3,
+        "doctor_id": 1,
+        "patient_id": "P002",
+        "status": "Awaiting",
+        "diagnosis": "",
+        "treatment": "",
+        "datetime": "2026-06-01 09:00"
+    },
+    {
+        "appointment_id": 4,
+        "doctor_id": 4,
+        "patient_id": "P001",
+        "status": "Awaiting",
+        "diagnosis": "",
+        "treatment": "",
+        "datetime": "2026-08-01 14:00"
+    },
+    {
+        "appointment_id": 5,
+        "doctor_id": 4,
+        "patient_id": "P001",
+        "status": "Awaiting",
+        "diagnosis": "",
+        "treatment": "",
+        "datetime": "2026-07-24 14:00"
+    },
+    {
+        "appointment_id": 6,
+        "doctor_id": 4,
+        "patient_id": "P003",
+        "status": "Awaiting",
+        "diagnosis": "",
+        "treatment": "",
+        "datetime": "2027-02-03 16:00"
     }
 ]

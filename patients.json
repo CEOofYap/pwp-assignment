@@ -6,5 +6,21 @@
         "gender": "M",
         "phone": "0167079821",
         "address": "fairview  mansion"
+    },
+    {
+        "patient_id": "P002",
+        "name": "Jimmy",
+        "age": 30,
+        "gender": "M",
+        "phone": "0123456789",
+        "address": "1, Jalan Kebun, Malaysia"
+    },
+    {
+        "patient_id": "P003",
+        "name": "Michael Jackson",
+        "age": 99,
+        "gender": "M",
+        "phone": "0103456789",
+        "address": "Heaven"
     }
 ]
