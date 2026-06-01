@@ -3,9 +3,9 @@
         "appointment_id": 0,
         "doctor_id": 1,
         "patient_id": "P001",
-        "status": "Cancelled",
-        "diagnosis": "",
-        "treatment": "",
+        "status": "Complete",
+        "diagnosis": "Stage 4 leech parasite living in his brain, impossible to rescue",
+        "treatment": "Public execution so other people won't be infected by him",
         "datetime": "2026-05-28 09:00"
     },
     {
