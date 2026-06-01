@@ -198,6 +198,12 @@ def print_all_doctors():
     for d in doctors:
         print(f"  {d["doctor_id"]:<6} {d["name"]:<30} {d["age"]:<5} {d["specialization"]}")
 
+def is_future(appointment):
+    return datetime.strptime(appointment["datetime"], '%Y-%m-%d %H:%M').date() > date.today()
+
+def is_today(appointment):
+    return datetime.strptime(appointment["datetime"], '%Y-%m-%d %H:%M').date() == date.today()
+
 # Global variables here
 history = []
 pg_idx = 0
@@ -217,7 +223,7 @@ def func1():
         ("func 2", call_menu("receptionist_main")),
         ("func 3", func3)
     ])
-#receptionist
+#receptionist menu
 @menu
 def receptionist_main():
     print("=" * 96)
@@ -822,8 +828,7 @@ def doctor_main():
     route_options([
         ("View daily appointment schedule", view_doctor_appointment),
         ("View all future appointments", view_future_appointment),
-        ("Record a consultation", record_consultation),
-        ("Mark appointment status", mark_appointment), 
+        ("Record a consultation/Mark appointment status", record_consultation),
         ("Edit past consultation", edit_consultation),
         ("Back to main menu", main_menu)
     ])
@@ -851,6 +856,19 @@ def find_doctor():
     else:
         return matches[0]
 
+def find_appointment_by(apts: list, *conditions) -> list:
+    """Going through appoint from input and checking if it satisfy all the conditions
+
+    Return the filtered list of appointment
+    """
+    matches = []
+    # Going through each appointment
+    for a in apts:
+        # Going throgh each condition to satisfy
+        if all(c(a) for c in conditions):
+            matches.append(a)
+    return matches
+
 @menu
 def view_doctor_appointment():
     # Insert doctor name or ID
@@ -869,12 +887,10 @@ def view_doctor_appointment():
         print(f"\n  {'ID':<6} {'Name':<30} {'Age':<5} Specialization")
         print("  " + "-" * 70)
         print(f"  {d["doctor_id"]:<6} {d["name"]:<30} {d["age"]:<5} {d["specialization"]}")
-        for a in appointments:
-            # Check if it is the current doctor's appointment
-            if d["doctor_id"] == a["doctor_id"]:
-                # Check if date is today
-                if datetime.strptime(a["datetime"], '%Y-%m-%d %H:%M').date() == date.today():
-                    daily_a.append(a)
+        daily_a = find_appointment_by(appointments, 
+                            is_today, # Check if the date is in future
+                            lambda a: a["doctor_id"] == d["doctor_id"] # Check if its the doctor's appointment
+                            )
     else:
         # Run again to ask for doctor again
         view_doctor_appointment()
@@ -907,12 +923,10 @@ def view_future_appointment():
         print(f"\n  {'ID':<6} {'Name':<30} {'Age':<5} Specialization")
         print("  " + "-" * 70)
         print(f"  {d["doctor_id"]:<6} {d["name"]:<30} {d["age"]:<5} {d["specialization"]}")
-        for a in appointments:
-            # Check if it is the current doctor's appointment
-            if d["doctor_id"] == a["doctor_id"]:
-                # Check if date is today
-                if datetime.strptime(a["datetime"], '%Y-%m-%d %H:%M').date() > date.today():
-                    daily_a.append(a)
+        daily_a = find_appointment_by(appointments, 
+                            is_future, # Check if the date is in future
+                            lambda a: a["doctor_id"] == d["doctor_id"] # Check if its the doctor's appointment
+                            )
     else:
         # Run again to ask for doctor again
         view_future_appointment()
@@ -938,18 +952,89 @@ def record_consultation():
     # Select which appointment
     # Mark it status as Complete/Awaiting/Missed/Cancelled
     # Insert diagnosis and treatment
-    pass
+
+    matched_appointment = []
+    # Find which doctor
+    print("=" * 96)
+    print("SEARCH DOCTOR")
+    print_all_doctors()
+    d = find_doctor()
+
+    if d:
+        matched_appointment = find_appointment_by(appointments, 
+                                      lambda a: a["status"] == "Awaiting", # Find all appointments that is awaiting
+                                      lambda a: a["doctor_id"] == d["doctor_id"] # Check if doctor id matches
+                                      )
+    else:
+        # Run the function again to get the doctor
+        record_consultation()
+    
+    print(f"\nAPPOINTMENTS")
+    print(f"  {'ID':<6} {"Patient ID":<10} {"Name":<30} {"Status":<10} {"Datetime"}")
+    print("  " + "-" * 70)
+    if not matched_appointment:
+        print("No appointment for this doctor to mark")
+        wait = input("Press Enter to continue...")
+        doctor_main()
+
+    for a in matched_appointment:
+        p = get_patient_by_ID(a["patient_id"])
+        print(f"  {a["appointment_id"]:<6} {p["patient_id"]:<10} {p["name"]:<30} {a["status"]:<10} {a["datetime"]}")
+
+    # Keep asking for appointment ID until user gives a valid one
+    while True:
+        choose = int(input("Enter appointment ID to record: ").strip())
+        # Find valid appointment where the appointment ID matched
+        valid_apt = find_appointment_by(matched_appointment, 
+                                    lambda a: a["appointment_id"] == choose
+                                    )
+        if valid_apt:
+            break
+        else:
+            print("Incorrect appointment ID, please try again...")
+            doctor_main()
+    
+    while True:
+        try:
+            print()
+            print(" Options ".center(96, "="))
+            print("""[0] Complete
+[1] Cancelled
+[2] Missed""")
+            print("="*96)
+            mark = int(input("Mark the status of the appointment: ").strip())
+            if not -1 < mark < 3:
+                print("Invalid option, please try again...")
+            else: 
+                break
+        except ValueError:
+            print("[!] Invalid input. Please enter a number.")
+
+    if mark == 0:
+        # Ask for diagnosis and treatment
+        valid_apt[0]["status"] = "Complete"
+        p = get_patient_by_ID(valid_apt[0]["patient_id"])
+        diagnosis = input(f"Enter diagnosis for patient {p["patient_id"]} {p["name"]}: ").strip()
+        treatment = input(f"Enter treatment for patient {p["patient_id"]} {p["name"]}: ").strip()
+        valid_apt[0]["diagnosis"] = diagnosis
+        valid_apt[0]["treatment"] = treatment
+    elif mark == 1:
+        valid_apt[0]["status"] = "Cancelled"
+    elif mark == 2:
+        valid_apt[0]["status"] = "Missed"
+
+    save_json("appointments.json", appointments)
+    wait = input("\nPress Enter to continue...")
+
+    # Return to the doctor main menu
+    doctor_main()
+
 
 @menu
 def edit_consultation():
     # Display all consultation
     # Select which to edit
     # Make changes
-    pass
-
-@menu
-def mark_appointment():
-    # Change the satus of Appointment
     pass
         
 

@@ -3,7 +3,7 @@
         "appointment_id": 0,
         "doctor_id": 1,
         "patient_id": "P001",
-        "status": "Awaiting",
+        "status": "Cancelled",
         "diagnosis": "",
         "treatment": "",
         "datetime": "2026-05-28 09:00"
@@ -21,7 +21,7 @@
         "appointment_id": 2,
         "doctor_id": 1,
         "patient_id": "P003",
-        "status": "Awaiting",
+        "status": "Cancelled",
         "diagnosis": "",
         "treatment": "",
         "datetime": "2026-06-01 15:00"
@@ -30,9 +30,9 @@
         "appointment_id": 3,
         "doctor_id": 1,
         "patient_id": "P002",
-        "status": "Awaiting",
-        "diagnosis": "",
-        "treatment": "",
+        "status": "Complete",
+        "diagnosis": "Infection in lungs and liver",
+        "treatment": "Use any antibiotic",
         "datetime": "2026-06-01 09:00"
     },
     {
@@ -61,5 +61,23 @@
         "diagnosis": "",
         "treatment": "",
         "datetime": "2027-02-03 16:00"
+    },
+    {
+        "appointment_id": 7,
+        "doctor_id": 2,
+        "patient_id": "P001",
+        "status": "Awaiting",
+        "diagnosis": "",
+        "treatment": "",
+        "datetime": "2026-07-11 09:00"
+    },
+    {
+        "appointment_id": 8,
+        "doctor_id": 3,
+        "patient_id": "P004",
+        "status": "Awaiting",
+        "diagnosis": "",
+        "treatment": "",
+        "datetime": "2026-06-25 11:00"
     }
 ]

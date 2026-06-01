@@ -22,5 +22,13 @@
         "gender": "M",
         "phone": "0103456789",
         "address": "Heaven"
+    },
+    {
+        "patient_id": "P004",
+        "name": "Jason Lim",
+        "age": 20,
+        "gender": "M",
+        "phone": "0112305960",
+        "address": "30, Jalan Bapak Kamu, 40400"
     }
 ]
