@@ -1,0 +1,30 @@
+[
+    {
+        "appointment_id": 1,
+        "items": [
+            {
+                "name": "Consultation fees",
+                "price": 50
+            },
+            {
+                "name": "Medication",
+                "price": 20
+            }
+        ],
+        "total": 70
+    },
+    {
+        "appointment_id": 2,
+        "items": [
+            {
+                "name": "Consultation fees",
+                "price": 50
+            },
+            {
+                "name": "egt",
+                "price": 32
+            }
+        ],
+        "total": 82
+    }
+]

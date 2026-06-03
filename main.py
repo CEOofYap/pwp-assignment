@@ -214,6 +214,26 @@ def is_future(appointment):
 def is_today(appointment):
     return datetime.strptime(appointment["datetime"], '%Y-%m-%d %H:%M').date() == date.today()
 
+def save_bill_json(appointment_id):
+    bills = load_json("bills.json")
+
+    bill_data = {
+        "appointment_id": appointment_id,
+        "items": [
+            {
+                "name": bill_name[i],
+                "price": bill[i]
+            }
+            for i in range(len(bill))
+        ],
+        "total": sum(bill)
+    }
+
+    bills.append(bill_data)
+    save_json("bills.json", bills)
+
+    print("Bill saved successfully!")
+
 # Global variables here
 history = []
 pg_idx = 0
@@ -726,83 +746,134 @@ def finance_main():
             
         def create_bill():
 
+            appointment_id = int(input("Enter appointment id: "))
+
             while True:
 
                 def add_consultation():
                     bill_name.append("Consultation fees")
                     bill.append(CONSULTATION_FEE)
                     print("Consultation fees added")
+
                 
                 def add_bill():
                     item = input("Enter item name: ")
                     bill_name.append(item)
                     price = int(input("Enter price: "))
                     bill.append(price)
-                
+
+                def save_bill():
+                    save_bill_json(appointment_id)
+
                 route_options([
                 ("Add consultation fees", add_consultation),
                 ("Add bill item", add_bill),
+                ("Save bill", save_bill),
                 ("Back", generate_bill)
                 ])
 
             
         def print_bill():
-            def save_bill():
-                total = sum(bill)
-                appointmend_id =  int(input("Enter appointment ID: "))
-                appointments = load_json("appointments.json")
-                valid = 0
-                for i in appointments:
-                    if i["appointment_id"] == appointmend_id:
-                        i["fees"] = total
-                        save_json("appointments.json", appointments)
-                        print("Added")
-                        valid = 1
-                        break
+            bills = load_json("bills.json")
 
-                if valid == 0:
-                    print("Error")
+            appointment_id = int(input("Enter appointment ID: "))
 
-            print("\n===== BILL =====")
-            print(f"{'No':<5}{'Item':<25}{'Price':>10}")
-            print("-" * 40)
+            for bill in bills:
+                if bill["appointment_id"] == appointment_id:
 
-            for i in range(len(bill)):
-                print(f"{i+1:<5}{bill_name[i]:<25}{bill[i]:>10.2f}")
+                    filename = f"bill_{appointment_id}.txt"
 
-            print("-" * 40)
-            print(f"{'Total':<30}{sum(bill):>10.2f}")
-            
-            route_options([
-                ("Save bill", save_bill)
-            ])
+                    content = []
+                    content.append("=" * 60)
+                    content.append(f"BILL FOR APPOINTMENT #{appointment_id}")
+                    content.append("=" * 60)
+                    content.append(f"{'No':<5}{'Item':<30}{'Price':>10}")
+                    content.append("-" * 60)
+
+                    for i, item in enumerate(bill["items"]):
+                        content.append(f"{i+1:<5}{item['name']:<30}{item['price']:>10.2f}")
+
+                    content.append("-" * 60)
+                    content.append(f"{'TOTAL':<35}{bill['total']:>10.2f}")
+                    content.append("=" * 60)
+
+                    text_output = "\n".join(content)
+
+                    print("\n" + text_output)
+
+                    save_to_txt = input("Save to .txt file? y/N: ")
+                    if save_to_txt.upper() == "Y":
+                        with open(filename, "w") as f:
+                            f.write(text_output)
+
+                        print(f"\nBill exported to {filename}")
+                    route_options([
+                    ("Home", main_menu),
+                    ])
+
+                print("Bill not found for that appointment ID.")
+                route_options([
+                ("Home", main_menu),
+                ])
 
         route_options([
         ("Create bill", create_bill),
         ("Print bill", print_bill)
         ])
 
+
     def generate_reports():
-        appointments = load_json("appointments.json")
-        date_total = 0
-        date = input("Enter date (YYYY/MM/DD) or \"today\" for today's date: ")
-        if date.upper() == "TODAY":
-            date = datetime.now().date()
+        def date_revenue():
+            date_total = 0
+            date = input("Enter date (YYYY/MM/DD) or \"today\" for today's date: ")
+            if date.upper() == "TODAY":
+                date = datetime.now().date()
 
-        for i in appointments:
-            if str(datetime.fromisoformat(i["datetime"]).date()) == date:
-                date_total += (i["fees"])
+            for i in appointments:
+                if str(datetime.fromisoformat(i["datetime"]).date()) == date:
+                    date_total += (i["fees"])
 
+            print(f"Total for {date}: {date_total}")
+            route_options([
+            ("Home", main_menu),
+            ])
 
-        print(f"Total for {date}: {date_total}")
+        def doctor_revenue():
+        
+            print_doctors(doctors)
 
+            doctor = int(input("\nEnter Doctor ID: "))
+
+            revenue = 0
+            total_appointments = 0
+
+            for i in appointments:
+                if i["doctor_id"] == doctor:
+                    revenue += i["fees"]
+                    total_appointments += 1
+
+            print("\n" + "-" * 40)
+            print(f"Doctor ID          : {doctor}")
+            print(f"Total Appointments : {total_appointments}")
+            print(f"Total Revenue      : RM {revenue:,.2f}")
+            print("-" * 40)
+            route_options([
+            ("Back", finance_main),
+            ])
+        
+        route_options([
+            ("Daily Revenue", date_revenue),
+            ("Revenue by Doctor", doctor_revenue),
+            ("Back", finance_main)
+        ])
+        
     route_options([
         ("func 1", func1),
         ("func 2", receptionist_main),
         ("func 3 again", func3),
-        ("finance_main", finance_main),
+        ("Finance Officer", finance_main),
         ("Generate Bill", generate_bill),
-        ("Generate Reports", generate_reports)
+        ("Generate Reports", generate_reports),
     ])
 
 
