@@ -226,7 +226,8 @@ def save_bill_json(appointment_id):
             }
             for i in range(len(bill))
         ],
-        "total": sum(bill)
+        "total": sum(bill),
+        "outstanding": sum(bill)
     }
 
     bills.append(bill_data)
@@ -240,6 +241,7 @@ pg_idx = 0
 doctors: list[dict] = load_json("doctors.json")
 appointments: list[dict] = load_json("appointments.json")
 patients: list[dict] = load_json("patients.json")
+bills: list[dict] = load_json("bills.json")
 CONSULTATION_FEE = 50
 bill_name = []
 bill = []
@@ -737,25 +739,26 @@ def func3():
 #Finance menu
 @menu
 def finance_main():
-    print("This is func3")
-
     def generate_bill():
-
-        bill_name.clear
-        bill.clear
-            
         def create_bill():
-
             appointment_id = int(input("Enter appointment id: "))
+            for existing_bill in bills:
+                if existing_bill["appointment_id"] == appointment_id:
+                    print("A bill already exists for this appointment.")
+                    route_options([
+                    ("Back", generate_bill),
+                    ])
 
             while True:
 
                 def add_consultation():
-                    bill_name.append("Consultation fees")
-                    bill.append(CONSULTATION_FEE)
-                    print("Consultation fees added")
+                    doctor_id = (appointments[appointment_id]["doctor_id"])
+                    for i in doctors:
+                        if i["doctor_id"] == doctor_id:
+                            bill_name.append("Consultation fees")
+                            bill.append(i["fee"])
+                            print("Consultation fees added")
 
-                
                 def add_bill():
                     item = input("Enter item name: ")
                     bill_name.append(item)
@@ -771,8 +774,7 @@ def finance_main():
                 ("Save bill", save_bill),
                 ("Back", generate_bill)
                 ])
-
-            
+        
         def print_bill():
             bills = load_json("bills.json")
 
@@ -795,6 +797,7 @@ def finance_main():
 
                     content.append("-" * 60)
                     content.append(f"{'TOTAL':<35}{bill['total']:>10.2f}")
+                    content.append(f"{'OUTSTANDING':<35}{bill['outstanding']:>10.2f}")
                     content.append("=" * 60)
 
                     text_output = "\n".join(content)
@@ -808,49 +811,58 @@ def finance_main():
 
                         print(f"\nBill exported to {filename}")
                     route_options([
-                    ("Home", main_menu),
+                    ("Back", generate_bill),
                     ])
 
                 print("Bill not found for that appointment ID.")
                 route_options([
-                ("Home", main_menu),
+                ("Back", finance_main),
                 ])
 
         route_options([
         ("Create bill", create_bill),
-        ("Print bill", print_bill)
+        ("Print bill", print_bill),
+        ("Back", finance_main)
         ])
 
 
     def generate_reports():
         def date_revenue():
-            date_total = 0
+            revenue = 0
+            appointment_id = []
             date = input("Enter date (YYYY/MM/DD) or \"today\" for today's date: ")
-            if date.upper() == "TODAY":
-                date = datetime.now().date()
+            date = parse_date(date)
 
             for i in appointments:
                 if str(datetime.fromisoformat(i["datetime"]).date()) == date:
-                    date_total += (i["fees"])
+                    appointment_id.append(i["appointment_id"])
 
-            print(f"Total for {date}: {date_total}")
+            for i in bills:
+                if i["appointment_id"] in appointment_id:
+                    revenue += i["total"]
+                    
+            print(f"Total for {date}: {revenue}")
             route_options([
             ("Home", main_menu),
             ])
 
         def doctor_revenue():
-        
             print_doctors(doctors)
 
             doctor = int(input("\nEnter Doctor ID: "))
 
+            appointment_id = []
             revenue = 0
             total_appointments = 0
 
             for i in appointments:
                 if i["doctor_id"] == doctor:
-                    revenue += i["fees"]
+                    appointment_id.append(i["appointment_id"])
                     total_appointments += 1
+
+            for i in bills:
+                if i["appointment_id"] in appointment_id:
+                    revenue += i["total"]
 
             print("\n" + "-" * 40)
             print(f"Doctor ID          : {doctor}")
@@ -867,13 +879,45 @@ def finance_main():
             ("Back", finance_main)
         ])
         
+    def pay_bill():
+        bills = load_json("bills.json")
+
+        appointment_id = int(input("Enter appointment ID: "))
+
+        for bill in bills:
+            if bill["appointment_id"] == appointment_id:
+
+                print(f"Total Bill      : RM {bill['total']:.2f}")
+                print(f"Outstanding     : RM {bill['outstanding']:.2f}")
+
+                payment = float(input("Payment Amount: "))
+
+                if payment <= 0:
+                    print("Invalid payment amount.")
+                    return
+
+                if payment > bill["outstanding"]:
+                    print("Payment exceeds outstanding amount.")
+                    return
+
+                bill["outstanding"] -= payment
+
+                save_json("bills.json", bills)
+
+                print(f"Remaining Balance: RM {bill['outstanding']:.2f}")
+
+                if bill["outstanding"] == 0:
+                    print("Bill fully paid.")
+
+                return
+
+        print("Bill not found.")
+        
     route_options([
-        ("func 1", func1),
-        ("func 2", receptionist_main),
-        ("func 3 again", func3),
-        ("Finance Officer", finance_main),
         ("Generate Bill", generate_bill),
         ("Generate Reports", generate_reports),
+        ("Pay Bills", pay_bill),
+        ("Home", main_menu)
     ])
 
 
