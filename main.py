@@ -739,6 +739,8 @@ def func3():
 #Finance menu
 @menu
 def finance_main():
+    print("="*96)
+    print("Role: Finance Officer")
     def generate_bill():
         appointment_id = int(input("Enter appointment id: "))
         for existing_bill in bills:
@@ -903,7 +905,7 @@ def finance_main():
         for bill in bills:
             if bill["appointment_id"] == appointment_id:
                 if bill["outstanding"] == 0:
-                    print("Bill fully paid")
+                    print("Bill fully paid.")
                     route_options([
                     ("Back", finance_main)
                     ])
