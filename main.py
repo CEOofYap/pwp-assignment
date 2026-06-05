@@ -742,6 +742,7 @@ def finance_main():
     print("="*96)
     print("Role: Finance Officer")
     def generate_bill():
+        print_appointments(appointments)
         appointment_id = int(input("Enter appointment id: "))
         for existing_bill in bills:
             if existing_bill["appointment_id"] == appointment_id:
