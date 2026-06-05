@@ -248,13 +248,83 @@ bill = []
 
 # Menus
 @menu
-def func1():
-    print("This is func1")
+def admin_main():
+    print("=" * 96)
+    print("Role: Administrator")
+    print("What do you want to do?")
     route_options([
-        ("func 1 again", func1),
-        ("func 2", call_menu("receptionist_main")),
-        ("func 3", func3)
+        ("Add new doctor", admin_add_doctor),
+        ("Remove doctor profile", admin_remove_doctor),
+        ("Back to main menu", main_menu)
     ])
+
+@menu
+def admin_add_doctor():
+    global doctors
+    print("=" * 96)
+    print("ADD NEW DOCTOR")
+    name = input("Full Name: Dr. ").strip()
+    try:
+        age = int(input("Age: ").strip())
+        fee = float(input("Consultation Fee (RM): ").strip())
+    except ValueError:
+        print("[!] Invalid input numeric types. Operation cancelled.")
+        input("\nPress ENTER to continue...")
+        admin_main()
+        return
+    
+    spec = input("Specialization: ").strip()
+    slots_input = input("Enter available time slots comma-separated (e.g. 09:00,11:00,14:30): ").strip()
+    slots = [s.strip() for s in slots_input.split(",") if s.strip()]
+    
+    next_id = max(d["doctor_id"] for d in doctors) + 1 if doctors else 1
+    
+    new_doctor = {
+        "doctor_id": next_id,
+        "name": name,
+        "age": age,
+        "specialization": spec,
+        "fee": fee,
+        "available_slots": slots,
+        "max_appointments_per_day": 5
+    }
+    doctors.append(new_doctor)
+    save_json("doctors.json", doctors)
+    print(f"\n✔ Success: Dr. {name} registered with ID {next_id}.")
+    input("\nPress ENTER to continue...")
+    admin_main()
+
+@menu
+def admin_remove_doctor():
+    global doctors
+    print("=" * 96)
+    print("REMOVE DOCTOR PROFILE")
+    print_doctors(doctors)
+    try:
+        doc_id = int(input("\nEnter Doctor ID to purge: ").strip())
+    except ValueError:
+        print("[!] Input parsing error.")
+        input("\nPress ENTER to continue...")
+        admin_main()
+        return
+
+    doc = next((d for d in doctors if d["doctor_id"] == doc_id), None)
+    if not doc:
+        print("[!] ID error. Target not found.")
+        input("\nPress ENTER to continue...")
+        admin_main()
+        return
+
+    confirm = input(f"Confirm deletion processing for Dr. {doc['name']}? (Y/N): ").strip().upper()
+    if confirm == 'Y':
+        doctors = [d for d in doctors if d["doctor_id"] != doc_id]
+        save_json("doctors.json", doctors)
+        print("\n🗑️ Target record removed successfully.")
+    else:
+        print("\nOperation aborted.")
+
+    input("\nPress ENTER to continue...")
+    admin_main()
 #receptionist menu
 @menu
 def receptionist_main():
@@ -1041,7 +1111,7 @@ def main_menu():
 """, end="")
     print("Welcome to SmartClinic - Appointment and Patient System")
     route_options([
-        ("Administrator", func1),
+        ("Administrator", admin_main),
         ("Receptionist", receptionist_main),
         ("Doctor", doctor_main),
         ("Finance officer", finance_main) # Replace these function with your main function

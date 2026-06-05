@@ -5,7 +5,13 @@
         "age": 30,
         "specialization": "General Practice",
         "fee": 50.0,
-        "available_slots": ["09:00", "10:00", "11:00", "14:00", "15:00"]
+        "available_slots": [
+            "09:00",
+            "10:00",
+            "11:00",
+            "14:00",
+            "15:00"
+        ]
     },
     {
         "doctor_id": 2,
@@ -13,7 +19,11 @@
         "age": 35,
         "specialization": "Cardiology",
         "fee": 80.0,
-        "available_slots": ["09:00", "10:00", "11:00"]
+        "available_slots": [
+            "09:00",
+            "10:00",
+            "11:00"
+        ]
     },
     {
         "doctor_id": 3,
@@ -21,7 +31,12 @@
         "age": 40,
         "specialization": "Dermatology",
         "fee": 60.0,
-        "available_slots": ["10:00", "11:00", "14:00", "15:00"]
+        "available_slots": [
+            "10:00",
+            "11:00",
+            "14:00",
+            "15:00"
+        ]
     },
     {
         "doctor_id": 4,
@@ -29,6 +44,23 @@
         "age": 40,
         "specialization": "Urology",
         "fee": 60.0,
-        "available_slots": ["10:00", "11:00", "14:00", "15:00", "16:00"]
+        "available_slots": [
+            "10:00",
+            "11:00",
+            "14:00",
+            "15:00",
+            "16:00"
+        ]
+    },
+    {
+        "doctor_id": 5,
+        "name": "Choo",
+        "age": 15,
+        "specialization": "Leech Removal",
+        "fee": 93.0,
+        "available_slots": [
+            "9:00"
+        ],
+        "max_appointments_per_day": 5
     }
 ]
