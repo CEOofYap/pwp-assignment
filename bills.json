@@ -1,5 +1,20 @@
 [
     {
+        "appointment_id": 0,
+        "items": [
+            {
+                "name": "Consultation fees",
+                "price": 50.0
+            },
+            {
+                "name": "Morgue fee",
+                "price": 10000
+            }
+        ],
+        "total": 50.0,
+        "outstanding": 0.0
+    },
+    {
         "appointment_id": 1,
         "items": [
             {
@@ -8,10 +23,91 @@
             },
             {
                 "name": "Meds",
-                "price": 159
+                "price": 159.0
             }
         ],
         "total": 239.0,
+        "outstanding": 15.0
+    },
+    {
+        "appointment_id": 2,
+        "items": [
+            {
+                "name": "Consultation fees",
+                "price": 50.0
+            },
+            {
+                "name": "Cybernetic Lungs",
+                "price": 250000
+            }
+        ],
+        "total": 50.0,
         "outstanding": 0.0
+    },
+    {
+        "appointment_id": 3,
+        "items": [
+            {
+                "name": "Consultation fees",
+                "price": 50.0
+            }
+        ],
+        "total": 50.0,
+        "outstanding": 0.0
+    },
+    {
+        "appointment_id": 4,
+        "items": [
+            {
+                "name": "Consultation fees",
+                "price": 60.0
+            }
+        ],
+        "total": 60.0,
+        "outstanding": 60.0
+    },
+    {
+        "appointment_id": 5,
+        "items": [
+            {
+                "name": "Consultation fees",
+                "price": 60.0
+            }
+        ],
+        "total": 60.0,
+        "outstanding": 60.0
+    },
+    {
+        "appointment_id": 6,
+        "items": [
+            {
+                "name": "Consultation fees",
+                "price": 60.0
+            }
+        ],
+        "total": 60.0,
+        "outstanding": 60.0
+    },
+    {
+        "appointment_id": 7,
+        "items": [
+            {
+                "name": "Consultation fees",
+                "price": 80.0
+            }
+        ],
+        "total": 80.0,
+        "outstanding": 0.0
+    },
+    {
+        "appointment_id": 8,
+        "items": [
+            {
+                "name": "Consultation fees",
+                "price": 60.0
+            }
+        ],
+        "total": 60.0,
+        "outstanding": 60.0
     }
 ]
