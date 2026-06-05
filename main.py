@@ -779,7 +779,7 @@ def finance_main():
     
     def print_bill():
         bills = load_json("bills.json")
-
+        print_appointments(appointments)
         appointment_id = int(input("Enter appointment ID: "))
 
         for bill in bills:
