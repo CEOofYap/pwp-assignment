@@ -891,6 +891,10 @@ def finance_main():
             if not found:
                 print("No outstanding payments found.")
                 
+            route_options([
+            ("Back", finance_main),
+            ])
+                
         route_options([
             ("Daily Revenue", date_revenue),
             ("Revenue by Doctor", doctor_revenue),
