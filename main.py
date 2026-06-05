@@ -728,33 +728,36 @@ def check_availability():
     receptionist_main()
 
 @menu
-def func3():
-    print("This is func3")
-    route_options([
-        ("func 1", func1),
-        ("func 2", receptionist_main),
-        ("func 3 again", func3)
-    ])
-
-#Finance menu
-@menu
 def finance_main():
+    # Main entry point for Finance Officer module
     print("="*96)
     print("Role: Finance Officer")
+
     def generate_bill():
+        # Show all appointments before creating a bill
         print_appointments(appointments)
+
+        # Get appointment ID for which bill is being generated
         appointment_id = int(input("Enter appointment id: "))
+
+        # Check if a bill already exists for this appointment
         for existing_bill in bills:
             if existing_bill["appointment_id"] == appointment_id:
                 print("A bill already exists for this appointment.")
+
+                # Return to generate bill menu
                 route_options([
                 ("Back", generate_bill),
                 ])
 
+        # Bill creation loop (menu-driven)
         while True:
 
             def add_consultation():
+                # Retrieve doctor ID from appointment record
                 doctor_id = (appointments[appointment_id]["doctor_id"])
+
+                # Find doctor and add consultation fee
                 for i in doctors:
                     if i["doctor_id"] == doctor_id:
                         bill_name.append("Consultation fees")
@@ -762,112 +765,154 @@ def finance_main():
                         print("Consultation fees added")
 
             def add_bill():
+                # Add custom bill item
                 item = input("Enter item name: ")
                 bill_name.append(item)
+
                 price = int(input("Enter price: "))
                 bill.append(price)
 
             def save_bill():
+                # Save bill to storage
                 save_bill_json(appointment_id)
 
+            # Menu options for bill creation
             route_options([
             ("Add consultation fees", add_consultation),
             ("Add bill item", add_bill),
             ("Save bill", save_bill),
             ("Back", generate_bill)
             ])
-    
+
     def print_bill():
+        # Load all bills from file
         bills = load_json("bills.json")
+
+        # Show appointments for selection reference
         print_appointments(appointments)
+
+        # Get appointment ID to print bill for
         appointment_id = int(input("Enter appointment ID: "))
 
+        # Search for matching bill
         for bill in bills:
             if bill["appointment_id"] == appointment_id:
 
+                # Generate filename for exported bill
                 filename = f"bill_{appointment_id}.txt"
 
+                # Store formatted bill content lines
                 content = []
+
+                # Header section
                 content.append("=" * 60)
                 content.append(f"BILL FOR APPOINTMENT #{appointment_id}")
                 content.append("=" * 60)
+
+                # Table header
                 content.append(f"{'No':<5}{'Item':<30}{'Price':>10}")
                 content.append("-" * 60)
 
+                # Add each bill item
                 for i, item in enumerate(bill["items"]):
                     content.append(f"{i+1:<5}{item['name']:<30}{item['price']:>10.2f}")
 
+                # Summary section
                 content.append("-" * 60)
                 content.append(f"{'TOTAL':<35}{bill['total']:>10.2f}")
                 content.append(f"{'OUTSTANDING':<35}{bill['outstanding']:>10.2f}")
                 content.append("=" * 60)
 
+                # Convert list into formatted string
                 text_output = "\n".join(content)
 
+                # Display bill on screen
                 print("\n" + text_output)
 
+                # Ask whether to save as text file
                 save_to_txt = input("Save to .txt file? y/N: ")
+
                 if save_to_txt.upper() == "Y":
+                    # Write bill to file
                     with open(filename, "w") as f:
                         f.write(text_output)
 
                     print(f"\nBill exported to {filename}")
+
+                # Return to generate bill menu
                 route_options([
                 ("Back", generate_bill),
                 ])
 
+            # If no matching bill is found
             print("Bill not found for that appointment ID.")
+
+            # Return to finance menu
             route_options([
             ("Back", finance_main),
             ])
 
     def generate_reports():
+        # ---------------- DAILY REVENUE ----------------
         def date_revenue():
             revenue = 0
             appointment_id = []
+
+            # Input date filter
             date = input("Enter date or \"today\" for today's date: ")
             date = parse_date(date)
 
+            # Collect appointments for selected date
             for i in appointments:
                 if str(datetime.fromisoformat(i["datetime"]).date()) == date:
                     appointment_id.append(i["appointment_id"])
 
+            # Sum revenue from matching bills
             for i in bills:
                 if i["appointment_id"] in appointment_id:
                     revenue += i["total"]
-                    
+
             print(f"Total for {date}: {revenue}")
+
             route_options([
             ("Back", finance_main),
             ])
 
+        # ---------------- DOCTOR REVENUE ----------------
         def doctor_revenue():
+            # Display doctor list
             print_doctors(doctors)
 
+            # Input doctor ID
             doctor = int(input("\nEnter Doctor ID: "))
 
             appointment_id = []
             revenue = 0
             total_appointments = 0
 
+            # Collect appointments for doctor
             for i in appointments:
                 if i["doctor_id"] == doctor:
                     appointment_id.append(i["appointment_id"])
                     total_appointments += 1
 
+            # Sum revenue from bills linked to doctor
             for i in bills:
                 if i["appointment_id"] in appointment_id:
                     revenue += i["total"]
 
+            # Display summary
             print("\n" + "-" * 40)
             print(f"Doctor ID          : {doctor}")
             print(f"Total Appointments : {total_appointments}")
             print(f"Total Revenue      : RM {revenue:,.2f}")
             print("-" * 40)
+
             route_options([
             ("Back", finance_main),
             ])
 
+        # ---------------- OUTSTANDING PAYMENTS ----------------
         def outstanding_payments():
             found = False
 
@@ -876,6 +921,7 @@ def finance_main():
             print(f"{'Appointment ID':<20}{'Total':<15}{'Outstanding':<15}")
             print("-" * 60)
 
+            # Display bills with outstanding balance
             for bill in bills:
                 if bill["outstanding"] > 0:
                     found = True
@@ -888,13 +934,15 @@ def finance_main():
 
             print("=" * 60)
 
+            # If no outstanding bills exist
             if not found:
                 print("No outstanding payments found.")
-                
+
             route_options([
             ("Back", finance_main),
             ])
-                
+
+        # Report menu options
         route_options([
             ("Daily Revenue", date_revenue),
             ("Revenue by Doctor", doctor_revenue),
@@ -903,41 +951,60 @@ def finance_main():
         ])
 
     def pay_bill():
+        # Load bills from storage
         bills = load_json("bills.json")
+
+        # Show appointments for reference
         print_appointments(appointments)
+
+        # Get appointment ID for payment
         appointment_id = int(input("Enter appointment ID: "))
 
+        # Search for matching bill
         for bill in bills:
             if bill["appointment_id"] == appointment_id:
+
+                # If already fully paid
                 if bill["outstanding"] == 0:
                     print("Bill fully paid.")
+
                     route_options([
                     ("Back", finance_main)
                     ])
 
+                # Display bill summary
                 print(f"Total Bill      : RM {bill['total']:.2f}")
                 print(f"Outstanding     : RM {bill['outstanding']:.2f}")
 
+                # Input payment amount
                 payment = float(input("Payment Amount: "))
 
+                # Validate payment amount
                 if payment <= 0:
                     print("Invalid payment amount.")
+
                     route_options([
                         ("Back", finance_main)
                     ])
 
+                # Prevent overpayment
                 if payment > bill["outstanding"]:
                     print("Payment exceeds outstanding amount.")
+
                     route_options([
                     ("Back", finance_main)
                     ])
 
+                # Update outstanding balance
                 bill["outstanding"] -= payment
 
+                # Save updated bills
                 save_json("bills.json", bills)
 
+                # Display remaining balance
                 print(f"Remaining Balance: RM {bill['outstanding']:.2f}")
 
+                # Check if fully paid
                 if bill["outstanding"] == 0:
                     print("Bill fully paid.")
 
@@ -945,8 +1012,10 @@ def finance_main():
                 ("Back", finance_main)
                 ])
 
+        # If no bill found
         print("Bill not found.")
-        
+
+    # Main Finance menu
     route_options([
         ("Generate Bill for Appointment", generate_bill),
         ("Print Bill", print_bill),
@@ -954,7 +1023,6 @@ def finance_main():
         ("Pay Bills", pay_bill),
         ("Home", main_menu)
     ])
-
 
 
 
